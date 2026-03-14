@@ -12,6 +12,7 @@ import { NewTicket } from "./pages/NewTicket";
 import { Profile } from "./pages/Profile";
 import { EditProfile } from "./pages/EditProfile";
 import { ChangePassword } from "./pages/ChangePassword";
+import { Notifications } from "./pages/Notifications";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/edit" element={<EditProfile />} />
         <Route path="/profile/password" element={<ChangePassword />} />
+        <Route path="/profile/notifications" element={<Notifications />} />
       </Routes>
     </Router>
   );

@@ -1,6 +1,6 @@
+import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { BottomNav } from "../components/BottomNav";
-import { useEffect, useState } from "react";
 import { api, Ticket } from "../services/api";
 
 export function TicketDetails() {
@@ -8,12 +8,28 @@ export function TicketDetails() {
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userRole, setUserRole] = useState<string>("user");
+  const [showStatusPicker, setShowStatusPicker] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
     if (id) {
       api.getTicket(id).then(setTicket);
+      api.getUserProfile().then(profile => setUserRole(profile.role));
     }
   }, [id]);
+
+  const handleUpdateStatus = async (status: string) => {
+    if (!id) return;
+    try {
+      await api.updateTicketStatus(id, status);
+      const updatedTicket = await api.getTicket(id);
+      if (updatedTicket) setTicket(updatedTicket);
+      setShowStatusPicker(false);
+    } catch (error) {
+      console.error("Failed to update status", error);
+    }
+  };
 
   const handleAddComment = async () => {
     if (!comment.trim() || !id) return;
@@ -55,9 +71,26 @@ export function TicketDetails() {
             </Link>
             <h1 className="text-lg font-bold">Detalhes do Chamado</h1>
           </div>
-          <button className="p-2 hover:bg-primary/10 rounded-full transition-colors flex items-center justify-center">
-            <span className="material-symbols-outlined text-slate-900">more_vert</span>
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-2 hover:bg-primary/10 rounded-full transition-colors flex items-center justify-center"
+            >
+              <span className="material-symbols-outlined text-slate-900">more_vert</span>
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-primary/10 z-20 py-1">
+                <Link to="/tickets" className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-50">
+                  <span className="material-symbols-outlined text-slate-400 text-lg">list</span>
+                  Voltar para Lista
+                </Link>
+                <button onClick={() => window.location.reload()} className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-50 text-left">
+                  <span className="material-symbols-outlined text-slate-400 text-lg">refresh</span>
+                  Atualizar Dados
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -111,12 +144,31 @@ export function TicketDetails() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 pt-4 border-t border-primary/10">
-            <button className="flex-1 min-w-[140px] bg-primary/10 text-primary border border-primary/20 py-2.5 px-4 rounded-lg font-bold flex items-center justify-center gap-2">
-              <span className="material-symbols-outlined text-sm">sync</span>
-              Alterar Status
-            </button>
-          </div>
+          {(userRole === 'Staff' || userRole === 'Admin') && (
+            <div className="pt-4 border-t border-primary/10 relative">
+              <button 
+                onClick={() => setShowStatusPicker(!showStatusPicker)}
+                className="w-full bg-primary/10 text-primary border border-primary/20 py-2.5 px-4 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-primary/20 transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">sync</span>
+                Alterar Status
+              </button>
+
+              {showStatusPicker && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-primary/10 z-20 overflow-hidden divide-y divide-primary/5">
+                  <button onClick={() => handleUpdateStatus('aberto')} className="w-full px-4 py-3 text-left text-sm font-medium hover:bg-slate-50 flex items-center justify-between">
+                    Em Aberto {ticket.status === 'aberto' && <span className="material-symbols-outlined text-primary text-sm">check</span>}
+                  </button>
+                  <button onClick={() => handleUpdateStatus('in-progress')} className="w-full px-4 py-3 text-left text-sm font-medium hover:bg-slate-50 flex items-center justify-between">
+                    Em Andamento {ticket.status === 'in-progress' && <span className="material-symbols-outlined text-primary text-sm">check</span>}
+                  </button>
+                  <button onClick={() => handleUpdateStatus('closed')} className="w-full px-4 py-3 text-left text-sm font-medium hover:bg-slate-50 flex items-center justify-between">
+                    Fechado {ticket.status === 'closed' && <span className="material-symbols-outlined text-primary text-sm">check</span>}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         <section className="mt-6">

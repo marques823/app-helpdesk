@@ -402,6 +402,17 @@ export const api = {
     }
     return new Promise((resolve) => setTimeout(() => resolve({ success: true }), 500));
   },
+  async updateTicketStatus(id: string | number, status: string): Promise<any> {
+    if (isLoggedIn()) {
+      const res = await fetchWithAuth(`/mobile/tickets/${id}/status/`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) return res.json();
+      throw new Error(`Erro ao atualizar status: ${res.status} ${res.statusText}`);
+    }
+    return new Promise((resolve) => setTimeout(() => resolve({ success: true }), 500));
+  },
   async getUserProfile(): Promise<UserProfile> {
     if (isLoggedIn()) {
       const res = await fetchWithAuth(`/auth/user/`);

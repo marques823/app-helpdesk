@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { BottomNav } from "../components/BottomNav";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { api, DashboardStats, UserProfile, Ticket } from "../services/api";
 
 export function Dashboard() {
@@ -8,6 +8,14 @@ export function Dashboard() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [recentTickets, setRecentTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchTerm.trim()) {
+      navigate(`/tickets?q=${encodeURIComponent(searchTerm.trim())}`);
+    }
+  };
 
   useEffect(() => {
     Promise.all([
@@ -62,7 +70,14 @@ export function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
             </span>
-            <input type="text" placeholder="Pesquisar chamados..." className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm shadow-sm" />
+            <input 
+              type="text" 
+              placeholder="Pesquisar chamados..." 
+              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm shadow-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleSearch}
+            />
           </div>
         </section>
 

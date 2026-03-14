@@ -1,16 +1,41 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { BottomNav } from "../components/BottomNav";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { api, Ticket } from "../services/api";
 
 export function TicketList() {
+  const location = useLocation();
+  const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [searchTerm, setSearchTerm] = useState(queryParams.get("q") || "");
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
 
   useEffect(() => {
     api.getTickets()
       .then(setTickets)
       .catch(err => console.error("Erro ao carregar chamados:", err));
   }, []);
+
+  const filteredTickets = tickets.filter(ticket => {
+    const matchesSearch = 
+      ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      ticket.id.toString().includes(searchTerm);
+    
+    const matchesStatus = !statusFilter || ticket.status === statusFilter;
+    const matchesPriority = !priorityFilter || ticket.priority === priorityFilter;
+
+    return matchesSearch && matchesStatus && matchesPriority;
+  });
+
+  const toggleStatusFilter = (status: string) => {
+    setStatusFilter(prev => prev === status ? null : status);
+  };
+
+  const togglePriorityFilter = (priority: string) => {
+    setPriorityFilter(prev => prev === priority ? null : priority);
+  };
 
   return (
     <div className="relative flex min-h-screen flex-col max-w-md mx-auto bg-background-light shadow-xl overflow-hidden pb-24">
@@ -34,33 +59,57 @@ export function TicketList() {
           <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
             <span className="material-symbols-outlined">search</span>
           </span>
-          <input type="text" placeholder="Buscar chamados por ID ou assunto" className="w-full h-12 rounded-xl bg-slate-100 border-none focus:ring-2 focus:ring-primary pl-12 pr-4 placeholder:text-slate-400 text-base outline-none" />
+          <input 
+            type="text" 
+            placeholder="Buscar chamados por ID ou assunto" 
+            className="w-full h-12 rounded-xl bg-slate-100 border-none focus:ring-2 focus:ring-primary pl-12 pr-4 placeholder:text-slate-400 text-base outline-none" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </label>
       </div>
 
       <div className="space-y-3 px-4 pb-4 overflow-x-auto">
         <div className="flex gap-2 pb-1 hide-scrollbar overflow-x-auto whitespace-nowrap">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 self-center mr-2">Status</span>
-          <button className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-primary text-white text-sm font-medium">
-            Aberto <span className="material-symbols-outlined text-[18px]">expand_more</span>
+          <button 
+            onClick={() => toggleStatusFilter('open')}
+            className={`inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${statusFilter === 'open' ? 'bg-primary text-white' : 'bg-slate-200 text-slate-700'}`}
+          >
+            Aberto {statusFilter === 'open' && <span className="material-symbols-outlined text-[18px]">close</span>}
           </button>
-          <button className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-slate-200 text-slate-700 text-sm font-medium">
-            Em Andamento <span className="material-symbols-outlined text-[18px]">expand_more</span>
+          <button 
+            onClick={() => toggleStatusFilter('in-progress')}
+            className={`inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${statusFilter === 'in-progress' ? 'bg-primary text-white' : 'bg-slate-200 text-slate-700'}`}
+          >
+            Em Andamento {statusFilter === 'in-progress' && <span className="material-symbols-outlined text-[18px]">close</span>}
           </button>
-          <button className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-slate-200 text-slate-700 text-sm font-medium">
-            Fechado <span className="material-symbols-outlined text-[18px]">expand_more</span>
+          <button 
+            onClick={() => toggleStatusFilter('closed')}
+            className={`inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${statusFilter === 'closed' ? 'bg-primary text-white' : 'bg-slate-200 text-slate-700'}`}
+          >
+            Fechado {statusFilter === 'closed' && <span className="material-symbols-outlined text-[18px]">close</span>}
           </button>
         </div>
         <div className="flex gap-2 pb-1 hide-scrollbar overflow-x-auto whitespace-nowrap border-t border-slate-100 pt-3">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 self-center mr-2">Prioridade</span>
-          <button className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-slate-200 text-slate-700 text-sm font-medium">
-            Alta <span className="material-symbols-outlined text-[18px]">expand_more</span>
+          <button 
+            onClick={() => togglePriorityFilter('high')}
+            className={`inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${priorityFilter === 'high' ? 'bg-primary text-white' : 'bg-slate-200 text-slate-700'}`}
+          >
+            Alta {priorityFilter === 'high' && <span className="material-symbols-outlined text-[18px]">close</span>}
           </button>
-          <button className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-slate-200 text-slate-700 text-sm font-medium">
-            Média <span className="material-symbols-outlined text-[18px]">expand_more</span>
+          <button 
+            onClick={() => togglePriorityFilter('medium')}
+            className={`inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${priorityFilter === 'medium' ? 'bg-primary text-white' : 'bg-slate-200 text-slate-700'}`}
+          >
+            Média {priorityFilter === 'medium' && <span className="material-symbols-outlined text-[18px]">close</span>}
           </button>
-          <button className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-slate-200 text-slate-700 text-sm font-medium">
-            Baixa <span className="material-symbols-outlined text-[18px]">expand_more</span>
+          <button 
+            onClick={() => togglePriorityFilter('low')}
+            className={`inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${priorityFilter === 'low' ? 'bg-primary text-white' : 'bg-slate-200 text-slate-700'}`}
+          >
+            Baixa {priorityFilter === 'low' && <span className="material-symbols-outlined text-[18px]">close</span>}
           </button>
         </div>
       </div>
@@ -72,7 +121,7 @@ export function TicketList() {
         </div>
         
         <div className="space-y-3">
-          {tickets.map(ticket => (
+          {filteredTickets.map(ticket => (
             <Link key={ticket.id} to={`/tickets/${ticket.id}`} className={`block p-4 rounded-xl bg-white border border-slate-200 shadow-sm hover:border-primary/50 transition-all cursor-pointer group ${ticket.status === 'closed' ? 'opacity-75' : ''}`}>
               <div className="flex justify-between items-start mb-2">
                 <span className="text-xs font-mono font-medium text-slate-400 group-hover:text-primary transition-colors">#{ticket.id}</span>

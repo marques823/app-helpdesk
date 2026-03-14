@@ -75,7 +75,7 @@ export function Profile() {
               </div>
               <span className="material-symbols-outlined text-slate-400">chevron_right</span>
             </Link>
-            <button className="w-full flex items-center gap-4 px-4 py-4 hover:bg-slate-50 transition-colors text-left">
+            <Link to="/profile/notifications" className="w-full flex items-center gap-4 px-4 py-4 hover:bg-slate-50 transition-colors text-left">
               <div className="flex items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 size-10">
                 <span className="material-symbols-outlined">notifications</span>
               </div>
@@ -84,7 +84,7 @@ export function Profile() {
                 <p className="text-xs text-slate-500">Gerenciar alertas e mensagens</p>
               </div>
               <span className="material-symbols-outlined text-slate-400">chevron_right</span>
-            </button>
+            </Link>
           </div>
         </section>
 

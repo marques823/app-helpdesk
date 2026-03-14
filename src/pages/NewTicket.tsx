@@ -108,7 +108,7 @@ export function NewTicket() {
                 <select id="category" value={categoryId} onChange={e => setCategoryId(e.target.value)} disabled={!companyId && companies.length > 0} className="w-full h-12 px-4 appearance-none rounded-xl border-none ring-1 ring-black/5 focus:ring-2 focus:ring-[#007AFF] bg-white text-base pr-10 outline-none disabled:opacity-50" required>
                   <option value="" disabled>Selecione uma categoria</option>
                   {categories.map(c => (
-                    <option key={c.id} value={c.id}>{c.icone} {c.nome}</option>
+                    <option key={c.id} value={c.id}>{c.nome}</option>
                   ))}
                   {categories.length === 0 && (
                     <option value="other" disabled>Carregando categorias...</option>
