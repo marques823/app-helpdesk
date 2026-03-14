@@ -19,26 +19,25 @@ export default defineConfig(({mode}) => {
       hmr: process.env.DISABLE_HMR !== 'true',
       proxy: {
         '/api': {
-          target: 'https://helpdesk.tecnicolitoral.com',
+          target: 'http://127.0.0.1:8002',
           changeOrigin: true,
           secure: false,
-          cookieDomainRewrite: "",
-          headers: {
-            'Origin': 'https://helpdesk.tecnicolitoral.com',
-            'Referer': 'https://helpdesk.tecnicolitoral.com/'
-          },
           configure: (proxy, _options) => {
             proxy.on('proxyRes', (proxyRes, req, res) => {
               const setCookie = proxyRes.headers['set-cookie'];
               if (setCookie) {
                 proxyRes.headers['set-cookie'] = setCookie.map(cookie => {
-                  let newCookie = cookie.replace(/SameSite=[a-zA-Z]+/i, 'SameSite=None');
-                  if (!/SameSite=None/i.test(newCookie)) {
-                    newCookie += '; SameSite=None';
+                  // For local development on HTTP, SameSite=Lax is safer than None+Secure
+                  let newCookie = cookie.replace(/SameSite=[a-zA-Z]+/i, 'SameSite=Lax');
+                  if (!/SameSite=Lax/i.test(newCookie)) {
+                    newCookie += '; SameSite=Lax';
                   }
-                  if (!/Secure/i.test(newCookie)) {
-                    newCookie += '; Secure';
-                  }
+                  // Remove Secure flag if we are not on HTTPS
+                  newCookie = newCookie.replace(/;\s*Secure/i, '');
+                  
+                  // Also clear Domain so the browser attaches it to localhost
+                  newCookie = newCookie.replace(/Domain=[^;]+/i, '');
+                  
                   return newCookie;
                 });
               }

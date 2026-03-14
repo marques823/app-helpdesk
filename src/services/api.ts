@@ -150,8 +150,11 @@ const mockUser: UserProfile = {
 };
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
+// const API_URL = import.meta.env.VITE_API_URL || '/api';
+const IS_PRODUCTION = import.meta.env.PROD;
+const IS_PROXY = API_URL.startsWith('/') || API_URL.startsWith(window.location.origin);
 
-const isLoggedIn = () => localStorage.getItem('is_logged_in') === 'true';
+const isLoggedIn = () => !!localStorage.getItem('access_token');
 
 // Helper to get CSRF token from cookies if needed
 function getCookie(name: string) {
@@ -166,6 +169,9 @@ function getCookie(name: string) {
       }
     }
   }
+  if (!cookieValue && (name === 'csrftoken' || name === 'sessionid')) {
+    // Hidden for production
+  }
   return cookieValue;
 }
 
@@ -178,36 +184,39 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   
   headers.set('X-Requested-With', 'XMLHttpRequest');
 
-  const csrfToken = getCookie('csrftoken');
-  if (csrfToken && options.method && options.method !== 'GET' && options.method !== 'HEAD' && options.method !== 'OPTIONS') {
-    headers.set('X-CSRFToken', csrfToken);
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
   }
 
+  // console.log(`[API] Fetching ${endpoint}`);
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
-    credentials: 'include', // Important for session cookies
+    credentials: 'omit', // JWT doesn't need cookies
+    mode: IS_PROXY ? 'same-origin' : 'cors',
   });
 
+  if (!response.ok && response.status !== 401 && response.status !== 403) {
+    console.error(`[API] Error for ${endpoint}: ${response.status} ${response.statusText}`);
+  }
+
   if (response.status === 401 || response.status === 403) {
+    console.error(`[API] Auth error (${response.status}) for ${endpoint}. Token might be expired.`);
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('is_logged_in');
+    
     if (window.location.pathname !== '/') {
+      console.log(`[API] Redirecting to home due to auth error.`);
       window.location.href = '/';
     }
-    throw new Error('Sessão expirada ou não autorizada. Faça login novamente.');
+    throw new Error('Sessão expirada. Faça login novamente.');
   }
 
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('text/html')) {
-    console.error(`Endpoint ${endpoint} returned HTML instead of JSON. This usually means the user is not authenticated or the endpoint is wrong.`);
-    // We can also try to redirect to login if it's an auth issue
-    if (response.ok) {
-      localStorage.removeItem('is_logged_in');
-      if (window.location.pathname !== '/') {
-        window.location.href = '/';
-      }
-      throw new Error('Sessão expirada (redirecionamento HTML). Faça login novamente.');
-    }
+    console.warn(`[API] Endpoint ${endpoint} returned HTML instead of JSON. Check backend URL.`);
   }
 
   return response;
@@ -239,23 +248,20 @@ function mapTicket(data: any): Ticket {
 export const api = {
   async login(username: string, password: string):Promise<any> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     
     try {
       const headers: Record<string, string> = { 
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest'
       };
-      const csrfToken = getCookie('csrftoken');
-      if (csrfToken) {
-        headers['X-CSRFToken'] = csrfToken;
-      }
 
-      const res = await fetch(`${API_URL}/auth/login/`, {
+      const res = await fetch(`${API_URL}/auth/token/`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ username, password }),
-        credentials: 'include',
+        credentials: 'omit',
+        mode: IS_PROXY ? 'same-origin' : 'cors',
         signal: controller.signal
       });
       
@@ -263,10 +269,13 @@ export const api = {
       
       if (res.ok) {
         const data = await res.json();
+        localStorage.setItem('access_token', data.access);
+        localStorage.setItem('refresh_token', data.refresh);
         localStorage.setItem('is_logged_in', 'true');
         return data;
       } else {
-        throw new Error('Credenciais inválidas ou erro no servidor.');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Credenciais inválidas ou erro no servidor.');
       }
     } catch (error) {
       clearTimeout(timeoutId);
@@ -276,25 +285,10 @@ export const api = {
   },
 
   async logout() {
-    try {
-      const headers: Record<string, string> = {
-        'X-Requested-With': 'XMLHttpRequest'
-      };
-      const csrfToken = getCookie('csrftoken');
-      if (csrfToken) {
-        headers['X-CSRFToken'] = csrfToken;
-      }
-      await fetch(`${API_URL}/auth/logout/`, {
-        method: 'POST',
-        headers,
-        credentials: 'include',
-      });
-    } catch (e) {
-      console.error("Erro ao fazer logout", e);
-    } finally {
-      localStorage.removeItem('is_logged_in');
-      window.location.href = '/';
-    }
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('is_logged_in');
+    window.location.href = '/';
   },
 
   async getDashboardStats(): Promise<DashboardStats | null> {
@@ -313,8 +307,10 @@ export const api = {
       const res = await fetchWithAuth(`/meta/companies/`);
       if (res.ok) {
         const data = await res.json();
-        return Array.isArray(data) ? data : (data.results || []);
+        const results = Array.isArray(data) ? data : (data.results || []);
+        return results;
       }
+      console.error(`[API] Erro ao buscar empresas: ${res.status}`);
     }
     return [];
   },
@@ -324,8 +320,10 @@ export const api = {
       const res = await fetchWithAuth(url);
       if (res.ok) {
         const data = await res.json();
-        return Array.isArray(data) ? data : (data.results || []);
+        const results = Array.isArray(data) ? data : (data.results || []);
+        return results;
       }
+      console.error(`[API] Erro ao buscar categorias: ${res.status}`);
     }
     return [];
   },
