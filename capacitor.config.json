@@ -1,0 +1,6 @@
+{
+  "appId": "com.marques823.apphelpdesk",
+  "appName": "Helpdesk App",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

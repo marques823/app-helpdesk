@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { IonApp } from "@ionic/react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
@@ -16,18 +17,20 @@ import { Notifications } from "./pages/Notifications";
 
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/tickets" element={<TicketList />} />
-        <Route path="/tickets/new" element={<NewTicket />} />
-        <Route path="/tickets/:id" element={<TicketDetails />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/profile/edit" element={<EditProfile />} />
-        <Route path="/profile/password" element={<ChangePassword />} />
-        <Route path="/profile/notifications" element={<Notifications />} />
-      </Routes>
-    </Router>
+    <IonApp>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/tickets" element={<TicketList />} />
+          <Route path="/tickets/new" element={<NewTicket />} />
+          <Route path="/tickets/:id" element={<TicketDetails />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/profile/password" element={<ChangePassword />} />
+          <Route path="/profile/notifications" element={<Notifications />} />
+        </Routes>
+      </Router>
+    </IonApp>
   );
 }
