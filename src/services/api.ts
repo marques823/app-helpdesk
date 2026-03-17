@@ -275,11 +275,18 @@ export const api = {
         return data;
       } else {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Credenciais inválidas ou erro no servidor.');
+        const msg = errorData.detail || errorData.error || `Erro ${res.status}: ${res.statusText}`;
+        throw new Error(msg);
       }
-    } catch (error) {
+    } catch (error: any) {
       clearTimeout(timeoutId);
       console.error("Erro no login", error);
+      if (error.name === 'AbortError') {
+        throw new Error("O servidor demorou muito para responder. Verifique sua conexão.");
+      }
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error("Não foi possível conectar ao servidor. Verifique se o endereço está correto ou se há erro de CORS.");
+      }
       throw error;
     }
   },

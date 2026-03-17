@@ -17,8 +17,8 @@ export function Login() {
     try {
       await api.login(email, password);
       navigate("/dashboard");
-    } catch (err) {
-      setError("Falha ao fazer login. Verifique suas credenciais.");
+    } catch (err: any) {
+      setError(err.message || "Falha ao fazer login. Verifique suas credenciais.");
     } finally {
       setIsLoading(false);
     }
