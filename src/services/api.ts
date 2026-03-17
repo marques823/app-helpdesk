@@ -1,5 +1,4 @@
-// This is the API service.
-// It uses VITE_API_URL if available, otherwise falls back to mock data.
+import { Capacitor } from "@capacitor/core";
 
 export interface DashboardStats {
   total_tickets: number;
@@ -485,5 +484,44 @@ export const api = {
     }
     Object.assign(mockUser, user);
     return new Promise((resolve) => setTimeout(() => resolve(mockUser), 500));
+  },
+  async savePushToken(token: string): Promise<any> {
+    if (isLoggedIn()) {
+      const res = await fetchWithAuth(`/auth/push-token/`, {
+        method: 'POST',
+        body: JSON.stringify({ token, platform: Capacitor.getPlatform() })
+      });
+      if (res.ok) return res.json();
+      console.error(`Erro ao salvar push token: ${res.status}`);
+    }
+    console.log('[Mock API] Push token salvo:', token);
+    return { success: true };
+  },
+  async getNotificationSettings(): Promise<any> {
+    if (isLoggedIn()) {
+      const res = await fetchWithAuth(`/auth/notifications/settings/`);
+      if (res.ok) return res.json();
+      console.error(`Erro ao buscar configurações de notificação: ${res.status}`);
+    }
+    // Fallback settings
+    return {
+      newTickets: true,
+      replies: true,
+      statusUpdates: true,
+      systemAlerts: false,
+      push: true,
+      email: false,
+    };
+  },
+  async updateNotificationSettings(settings: any): Promise<any> {
+    if (isLoggedIn()) {
+      const res = await fetchWithAuth(`/auth/notifications/settings/`, {
+        method: 'PUT',
+        body: JSON.stringify(settings)
+      });
+      if (res.ok) return res.json();
+      throw new Error(`Erro ao atualizar configurações de notificação: ${res.status}`);
+    }
+    return new Promise((resolve) => setTimeout(() => resolve({ success: true }), 500));
   }
 };

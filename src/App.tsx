@@ -14,6 +14,7 @@ import { EditProfile } from "./pages/EditProfile";
 import { ChangePassword } from "./pages/ChangePassword";
 import { Notifications } from "./pages/Notifications";
 
+import { pushService } from "./services/push";
 import { Navigate } from "react-router-dom";
 
 export default function App() {
@@ -23,8 +24,15 @@ export default function App() {
     if (Capacitor.isNativePlatform()) {
       StatusBar.setStyle({ style: Style.Light }); // 'Light' means white background, dark icons
       StatusBar.setBackgroundColor({ color: '#ffffff' });
+      
+      // Initialize Push Notifications if authenticated (async to prevent blocking UI)
+      if (isAuthenticated) {
+        setTimeout(() => {
+          pushService.init().catch(err => console.error('[App] Push init failed:', err));
+        }, 1000); // 1s delay to let the app settle
+      }
     }
-  }, []);
+  }, [isAuthenticated]);
 
   return (
     <IonApp>
