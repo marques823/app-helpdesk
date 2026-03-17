@@ -25,7 +25,7 @@ export default function App() {
       StatusBar.setStyle({ style: Style.Light }); // 'Light' means white background, dark icons
       StatusBar.setBackgroundColor({ color: '#ffffff' });
       
-      // Initialize Push Notifications if authenticated (async to prevent blocking UI)
+      // Initialize Push Notifications if authenticated (Optimized async startup)
       if (isAuthenticated) {
         setTimeout(() => {
           pushService.init().catch(err => console.error('[App] Push init failed:', err));

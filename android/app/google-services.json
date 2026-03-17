@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "300084061879",
+    "project_id": "app-helpdesk-269a2",
+    "storage_bucket": "app-helpdesk-269a2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:300084061879:android:0603af2dd2f9049a508f32",
+        "android_client_info": {
+          "package_name": "com.marques823.apphelpdesk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABljS3hiNObR40aqLEosUcr3VM-vWf4J4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
