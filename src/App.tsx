@@ -1,10 +1,9 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { IonApp } from "@ionic/react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { StatusBar, Style } from "@capacitor/status-bar";
+import { Capacitor } from "@capacitor/core";
+
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
 import { TicketList } from "./pages/TicketList";
@@ -15,12 +14,23 @@ import { EditProfile } from "./pages/EditProfile";
 import { ChangePassword } from "./pages/ChangePassword";
 import { Notifications } from "./pages/Notifications";
 
+import { Navigate } from "react-router-dom";
+
 export default function App() {
+  const isAuthenticated = !!localStorage.getItem('access_token');
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.setStyle({ style: Style.Light }); // 'Light' means white background, dark icons
+      StatusBar.setBackgroundColor({ color: '#ffffff' });
+    }
+  }, []);
+
   return (
     <IonApp>
       <Router>
         <Routes>
-          <Route path="/" element={<Login />} />
+          <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/tickets" element={<TicketList />} />
           <Route path="/tickets/new" element={<NewTicket />} />

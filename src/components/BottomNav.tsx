@@ -6,16 +6,16 @@ export function BottomNav() {
   const path = location.pathname;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t border-slate-200 bg-white/90 backdrop-blur-md px-4 pb-6 pt-2 z-10">
+    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t border-[var(--border-base)] bg-[var(--bg-card)]/90 backdrop-blur-md px-4 pb-6 pt-2 z-10 transition-colors">
       <div className="flex justify-around items-center">
         <Link
           to="/dashboard"
           className={cn(
             "flex flex-col items-center gap-1 transition-colors",
-            path === "/dashboard" ? "text-primary" : "text-slate-400 hover:text-primary"
+            path === "/dashboard" ? "text-primary" : "text-[var(--text-muted)] hover:text-primary"
           )}
         >
-          <span className={cn("material-symbols-outlined", path === "/dashboard" && "material-symbols-fill")}>
+          <span className={cn("material-symbols-outlined text-xl", path === "/dashboard" && "material-symbols-fill")}>
             dashboard
           </span>
           <p className="text-[10px] font-bold uppercase tracking-widest">Painel</p>
@@ -24,10 +24,10 @@ export function BottomNav() {
           to="/tickets"
           className={cn(
             "flex flex-col items-center gap-1 transition-colors",
-            path.startsWith("/tickets") ? "text-primary" : "text-slate-400 hover:text-primary"
+            path.startsWith("/tickets") ? "text-primary" : "text-[var(--text-muted)] hover:text-primary"
           )}
         >
-          <span className={cn("material-symbols-outlined", path.startsWith("/tickets") && "material-symbols-fill")}>
+          <span className={cn("material-symbols-outlined text-xl", path.startsWith("/tickets") && "material-symbols-fill")}>
             confirmation_number
           </span>
           <p className="text-[10px] font-bold uppercase tracking-widest">Chamados</p>
@@ -36,10 +36,10 @@ export function BottomNav() {
           to="/profile"
           className={cn(
             "flex flex-col items-center gap-1 transition-colors",
-            path.startsWith("/profile") ? "text-primary" : "text-slate-400 hover:text-primary"
+            path.startsWith("/profile") ? "text-primary" : "text-[var(--text-muted)] hover:text-primary"
           )}
         >
-          <span className={cn("material-symbols-outlined", path.startsWith("/profile") && "material-symbols-fill")}>
+          <span className={cn("material-symbols-outlined text-xl", path.startsWith("/profile") && "material-symbols-fill")}>
             person
           </span>
           <p className="text-[10px] font-bold uppercase tracking-widest">Perfil</p>
