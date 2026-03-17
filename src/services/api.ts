@@ -184,39 +184,62 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   
   headers.set('X-Requested-With', 'XMLHttpRequest');
 
-  const token = localStorage.getItem('access_token');
+  let token = localStorage.getItem('access_token');
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  // console.log(`[API] Fetching ${endpoint}`);
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  let response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
-    credentials: 'omit', // JWT doesn't need cookies
+    credentials: 'omit',
     mode: IS_PROXY ? 'same-origin' : 'cors',
   });
+
+  // Handle Token Refresh on 401
+  if (response.status === 401) {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (refreshToken) {
+      try {
+        const refreshResponse = await fetch(`${API_URL}/auth/token/refresh/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh: refreshToken }),
+        });
+
+        if (refreshResponse.ok) {
+          const data = await refreshResponse.json();
+          localStorage.setItem('access_token', data.access);
+          
+          // Retry original request with new token
+          headers.set('Authorization', `Bearer ${data.access}`);
+          response = await fetch(`${API_URL}${endpoint}`, {
+            ...options,
+            headers,
+            credentials: 'omit',
+            mode: IS_PROXY ? 'same-origin' : 'cors',
+          });
+          return response;
+        }
+      } catch (e) {
+        console.error("[API] Failed to refresh token", e);
+      }
+    }
+  }
 
   if (!response.ok && response.status !== 401 && response.status !== 403) {
     console.error(`[API] Error for ${endpoint}: ${response.status} ${response.statusText}`);
   }
 
   if (response.status === 401 || response.status === 403) {
-    console.error(`[API] Auth error (${response.status}) for ${endpoint}. Token might be expired.`);
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('is_logged_in');
-    
-    if (window.location.pathname !== '/') {
-      console.log(`[API] Redirecting to home due to auth error.`);
-      window.location.href = '/';
-    }
+    console.error(`[API] Auth error (${response.status}) for ${endpoint}. Redirecting.`);
+    api.logout(); // Use centralized logout
     throw new Error('Sessão expirada. Faça login novamente.');
   }
 
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('text/html')) {
-    console.warn(`[API] Endpoint ${endpoint} returned HTML instead of JSON. Check backend URL.`);
+    console.warn(`[API] Endpoint ${endpoint} returned HTML instead of JSON.`);
   }
 
   return response;
