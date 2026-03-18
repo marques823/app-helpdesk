@@ -58,6 +58,7 @@ export class PushService {
     // On registration success, we get the token
     await PushNotifications.addListener('registration', async (token: Token) => {
       console.log('Push registration success, token: ' + token.value);
+      localStorage.setItem('push_token', token.value);
       try {
         await api.savePushToken(token.value);
       } catch (e) {

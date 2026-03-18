@@ -1,6 +1,6 @@
 import { IonApp } from "@ionic/react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { Capacitor } from "@capacitor/core";
 
@@ -15,21 +15,33 @@ import { ChangePassword } from "./pages/ChangePassword";
 import { Notifications } from "./pages/Notifications";
 
 import { pushService } from "./services/push";
-import { Navigate } from "react-router-dom";
 
 export default function App() {
-  const isAuthenticated = !!localStorage.getItem('access_token');
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('access_token'));
+
+  // Monitor localStorage for changes (Login/Logout)
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = !!localStorage.getItem('access_token');
+      if (token !== isAuthenticated) {
+        setIsAuthenticated(token);
+      }
+    };
+
+    const interval = setInterval(checkAuth, 1000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      StatusBar.setStyle({ style: Style.Light }); // 'Light' means white background, dark icons
-      StatusBar.setBackgroundColor({ color: '#ffffff' });
+      StatusBar.setStyle({ style: Style.Light }).catch(() => {});
+      StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
       
-      // Initialize Push Notifications if authenticated (Optimized async startup)
       if (isAuthenticated) {
+        console.log('[App] Authenticated, initializing push...');
         setTimeout(() => {
           pushService.init().catch(err => console.error('[App] Push init failed:', err));
-        }, 1000); // 1s delay to let the app settle
+        }, 2000); // 2s delay now to be even safer
       }
     }
   }, [isAuthenticated]);

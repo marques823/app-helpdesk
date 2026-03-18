@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { BottomNav } from "../components/BottomNav";
 import { api } from "../services/api";
+import { Capacitor } from "@capacitor/core";
 
 export function Notifications() {
   const [settings, setSettings] = useState({
@@ -149,6 +150,7 @@ export function Notifications() {
                 )}
               </button>
             </div>
+
           </>
         )}
       </main>
